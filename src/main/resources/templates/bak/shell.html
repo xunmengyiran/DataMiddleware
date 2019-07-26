@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh">
+<head>
+    <meta charset="UTF-8"/>
+    <title>数据中间件系统</title>
+    <script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="/js/json2.js"></script>
+    <script src="/js/bootstrap.min.js" type="text/javascript"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/animate.css" rel="stylesheet">
+    <script type="text/javascript">
+
+        $(document).ready(
+        		
+        function queryConfig() {
+                var baseUrl = getBaseUrl();
+                $.ajax({
+                    type: "GET",
+                    url: baseUrl + "/shell/edit2",
+                    success: function (data) {
+                    	if(!data){
+                    		return;
+                    	}
+                    	$('#id').val(data['id']);
+                    	$('#frequency').val(data['frequency']);
+                    	$('#shellText').val(data['shellText']);
+                    	$('#label').val(data['label']);
+                    },
+                    error: function (data) {
+                    }
+                });
+            });
+
+        function uploadFile() {
+            var baseUrl = getBaseUrl();
+            var formData = new FormData($('#uploadForm')[0]);
+            $.ajax({
+                type: 'post',
+                url: baseUrl + "/fileUpload",
+                data: formData,
+                cache: false,
+                processData: false,
+                contentType: false,
+                success: function (data) {
+                    switch (data) {
+                        case 'success':
+                            $('#myModal').modal({backdrop: 'static', keyboard: false}); //手动开启，点击空白不关闭
+                            $('#tips').text('上传成功');
+                            $('#modals').click(function () {
+                                $('#myModal').modal('hide')
+                            });
+                            break;
+                        case 'failed':
+                            $('#myModal').modal({backdrop: 'static', keyboard: false}) //手动开启，点击空白不关闭
+                            $('#tips').text('上传失败')
+                            $('#modals').click(function () {
+                                $('#myModal').modal('hide')
+                            })
+                            break;
+                        case 'no_file':
+                            $('#myModal').modal({backdrop: 'static', keyboard: false}); //手动开启，点击空白不关闭
+                            $('#tips').text('未选择任何文件');
+                            $('#modals').click(function () {
+                                $('#myModal').modal('hide')
+                            });
+                            break;
+                        case 'file_format_error':
+                            $('#myModal').modal({backdrop: 'static', keyboard: false}); //手动开启，点击空白不关闭
+                            $('#tips').text('文件格式错误')
+                            $('#modals').click(function () {
+                                $('#myModal').modal('hide')
+                            });
+                            break;
+                    }
+                },
+                error: function (data) {
+                }
+            });
+        }
+        function configShell() {
+            var baseUrl = getBaseUrl();
+            var configData = {
+                frequency:$('#frequency').val(),
+                label:$('#label').val(),
+                shellText:$('#shellText').val(),
+                id:$('#id').val()
+            };
+            $.ajax({
+                type: 'post',
+                url: baseUrl + "/shell",
+                data: JSON.stringify(configData),
+                cache: false,
+                dataType: "text",
+                contentType: "application/json",
+                success: function (data) {
+                    if (data == "sql_is_not_correct"){
+                        $('#myModal').modal({backdrop: 'static', keyboard: false}); //手动开启，点击空白不关闭
+                        $('#tips').text('SQL配置格式错误');
+                        $('#modals').click(function () {
+                            $('#myModal').modal('hide')
+                        })
+                    }else if(data == "success"){
+                        $('#tips').text('配置成功');
+                        $('#modals').click(function () {
+                            window.location.href='/main'
+                        })
+                        $('#myModal').modal({backdrop: 'static', keyboard: false}) //手动开启，点击空白不关闭
+                    }else {
+                        $('#myModal').modal({backdrop: 'static', keyboard: false}); //手动开启，点击空白不关闭
+                        $('#tips').text(data);
+                        $('#modals').click(function () {
+                            $('#myModal').modal('hide')
+                        })
+                    }
+                },
+                error: function (data) {
+                }
+            });
+        }
+    </script>
+    <style type="text/css">
+        .collection p{
+            display: inline-block;
+            width: 20%;
+            margin-right: 1%;
+        }
+        .collection select{
+            width: 38%;
+            margin-right: 1%;
+        }
+        .custom-file-label{
+            position: relative ;
+            width: 100%;
+        }
+        .custom-file-input{
+            display: none;
+        }
+        #sqlstr{
+            resize:none
+        }
+        .table-responsive {
+            width: 60%;
+        }
+        .btnevent{
+            margin-top: 2%;
+            width: 100%;
+        }
+        .btnevent .btn{
+            width: 13%;
+        }
+        .btnevent .btn:first-child{
+           margin-right: 2%;
+        }
+        input[type="text"], 
+        input[type="password"] {
+           width:79%;
+        }
+    </style>
+</head>
+<body class="top-navigation">
+<div id="wrapper">
+    <div id="page-wrapper" class="gray-bg">
+        <div class="row border-bottom white-bg">
+            <nav class="navbar navbar-expand-lg navbar-static-top" role="navigation">
+                <div class="navbar-collapse collapse" id="navbar">
+                    <ul class="nav navbar-nav mr-auto">
+                        <li class="active">
+                            <span th:include="basepath::html"></span>
+                            <a aria-expanded="false" role="button" onclick="javascript:window.location.href='/main'"> 返回主页</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        <div class="wrapper wrapper-content">
+            <div class="container">
+                <div class="row">
+
+                    <div class="col-lg-12">
+                        <div class="ibox ">
+                            <div class="ibox-title">
+                                <h5>定时执行SHELL脚本</h5>
+                            </div>
+                            <div class="ibox-content">
+                                <div class="table-responsive">
+                                    <div class="collection">
+                                        <table style="width:100%">
+                                        <tr> <td><p>执行周期</p><input type="hidden" id="id"><input id="frequency" type="text" ></td></tr>
+                                        <tr> <td><p>执行脚本</p><input type="text"  id="shellText"></td></tr>
+                                        <tr> <td><p>标签</p><input type="text"  id="label"></td></tr>
+                                        </table>
+                                    </div>
+                                    <form id="uploadForm" class="custom-file">
+                                        <input id="logo" type="file" name="file" class="custom-file-input" accept=".xls,.xlsx">
+                                        <label for="logo" class="custom-file-label">Choose file...</label>
+                                        <!--<input id="file" type="file" name="file" accept=".xls,.xlsx"/>-->
+                                    </form>
+                                    <div class="btnevent">
+                                        <button id="upload" class="btn btn-primary " onclick="uploadFile()">上传Excel</button>
+                                        <input type="button" class="btn btn-primary " onclick="configShell()" value="立即保存">
+                                    </div>
+
+                                </div>
+                                <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-body" id="tips"></div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-primary" id="modals" data-dismiss="modal" >确定</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(
+        $('.custom-file-input').on('change', function() {
+            var fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').addClass("selected").html(fileName);
+        })
+    )
+</script>
+</body>
+</html>

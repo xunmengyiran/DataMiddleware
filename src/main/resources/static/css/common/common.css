@@ -1,0 +1,102 @@
+@charset "utf-8";
+/* CSS Document */
+*{
+	margin:0;
+}
+.text{
+	width:240;
+	height:24;
+	font-size:16px;
+	color:#C5C5C5;
+}
+.loginMagtext{
+	width:249;
+	height:20;
+	font-size:16px;
+	color:#C5C5C5;
+}
+.verify{
+	width:142;
+	height:20;	
+	font-size:16px;
+	color:#C5C5C5;
+}
+.editVerify{
+	width:142;
+	height:20;	
+	font-size:16px;
+	color:#000000;
+}
+.textSmall{
+	width:240;
+	height:22;
+	font-size:16px;
+	color:#C5C5C5;
+}
+.editText{
+	width:240;
+	height:24;
+	font-size:16px;
+	color:#000000;
+}
+.magEditText{
+	width:249;
+	height:20;
+	font-size:16px;
+	color:#000000;
+}
+.editTextSmall{
+	width:240;
+	height:22;
+	font-size:16px;
+	color:#000000;
+}
+#bg{
+	background-color:#FFFFFF;
+	background:url(../img/bg.png);
+	background-repeat:no-repeat;
+	width:1350px;
+	height:710px;
+	margin:0 auto;
+}
+#loginMagbg{
+	background-color:#FFFFFF;
+	background:url(../img/magbg.png) no-repeat;
+	background-repeat:no-repeat;
+	background-size:100% 100%;
+	width:1350px;
+	height:623px;
+	overflow:hidden;
+	margin:0 auto;
+}
+#loginMag{
+	padding-top:110px;
+	padding-left:429px;
+}
+input,textarea:focus{
+	border:none;
+	outline:none;
+}
+.myFontBlue{
+	font-size:13px;
+	color:#78B0E3;
+}
+.myFontBlack{
+	font-size:14px;
+	color:#6A6A6A;
+}
+.myFontSmallBlack{
+	font-size:10px;
+	color:#C5C5C5;
+}
+#loginClient{
+	margin:auto auto;
+	padding-top:15%;
+	padding-left:27%;
+}
+.bd{
+	overflow-x:hidden;
+	}
+a{
+	text-decoration:none;
+}

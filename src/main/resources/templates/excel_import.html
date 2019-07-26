@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh">
+<head>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/default/easyui.css"/>
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/icon.css"/>
+    <script src="/easyui/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/jquery.easyui.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/locale/easyui-lang-zh_CN.js" type="text/javascript" charset="utf-8"></script>
+    <title>数据中间件系统</title>
+</head>
+<style>
+    html, body {
+        width: 100%;
+        height: 100%;
+    }
+
+    /*div {*/
+    /*height: 100%;*/
+    /*}*/
+</style>
+<body class="easyui-layout">
+<div data-options="region:'north',title:'EXCEL导入',split:true" style="height:13%;text-align: center;margin-top: 2%">
+    <form id="uploadForm" class="custom-file">
+        <input class="easyui-filebox" name="file"
+               data-options="buttonText:'选择文件',buttonAlign:'right',accept:'.xls,.xlsx'" style="width: 300px">
+        <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="confirmImport()"
+           style="margin-left: 0px">确认导入</a>
+    </form>
+</div>
+<div data-options="region:'center',split:true" style="height: 84%">
+    <div id="excelImportLogDataGrid"></div>
+</div>
+</body>
+<script type="text/javascript">
+    // $('#excelImportLogDataGrid').datagrid('total').total = 45;
+    $("#excelImportLogDataGrid").datagrid({
+        title: 'EXCEL导入日志',
+        rownumbers: true,
+        singleSelect: false,
+        striped: true,
+        fit: true,
+        url: '/getExcelImportLog',
+        method: "get",
+// 注意 两个数组
+        columns: [
+            [{field: 'checkbox', checkbox: true}, {
+                field: 'excelFileName',
+                title: '文件名',
+                width: '25%'
+            },
+                {
+                    field: 'excelSavePath',
+                    title: '文件存储路径',
+                    width: '25%'
+                },
+                {
+                    field: 'importUser',
+                    title: '导入者',
+                    width: '25%'
+                },
+                {
+                    field: 'importDate',
+                    title: '导入时间',
+                    width: '27%'
+                }
+            ]
+        ],
+        fitColumns: true,
+        autoRowHeight: false,
+        loadMsg: '数据加载中。。。',
+        pagination: true,
+        toolbar: [{
+            iconCls: 'icon-remove',
+            text: '删除',
+            handler: remove
+        }]
+    });
+
+    function confirmImport() {
+        var formData = new FormData($('#uploadForm')[0]);
+        $.ajax({
+            type: 'post',
+            url: "/fileUpload",
+            data: formData,
+            cache: false,
+            processData: false,
+            contentType: false,
+            dataType: "json",
+            success: function (res) {
+                /* var value = $('#progressbar').progressbar('getValue');
+                 if (value < 100) {
+                     value += Math.floor(Math.random() * 10);
+                     $('#p').progressbar('setValue', value);
+                     setTimeout(arguments.callee, 100);
+                 }*/
+                if (res.status == 1) {
+                    $.messager.show({
+                        title: "提示",
+                        msg: "导入成功！",
+                        timeout: 1000
+                    });
+                    $("#excelImportLogDataGrid").datagrid("reload");
+                } else {
+                    $.messager.show({
+                        title: "提示",
+                        msg: "导入失败！",
+                        timeout: 3000
+                    });
+                }
+            },
+            error: function (data) {
+                $.messager.alert("错误", "系统发生错误，请联系管理员!", "error");
+            }
+        });
+    }
+
+    function remove() {
+        var record = $("#excelImportLogDataGrid").datagrid('getChecked');
+        if(record.length == 0){
+            $.messager.show({
+                title:'提示',
+                msg:'请选择一条数据',
+                timeout:1000
+            });
+        }else{
+            $.messager.confirm('提示', '确认删除选中的' + record.length + '条记录吗？删除后不可恢复！', function (r) {
+                var ids = "";
+                if (r) {
+                    for (var i = 0; i < record.length; i++) {
+                        if (i < record.length - 1) {
+                            ids = ids + "'" + record[i].id + "',";
+                        } else {
+                            ids = ids + "'" + record[i].id + "'";
+                        }
+                    }
+                    $.post("/deleteExcelImportLogById?ids=" + ids, function (data) {
+                        $.messager.show({
+                            title: "提示",
+                            msg: data.msg,
+                            timeout: 1000
+                        });
+                        $("#excelImportLogDataGrid").datagrid('reload');
+                    },"json");
+                }
+            })
+        }
+    }
+</script>
+</html>

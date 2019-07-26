@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh">
+<head>
+    <meta charset="UTF-8"/>
+    <title>数据中间件系统</title>
+    <script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.js"></script>
+    <script type="text/javascript" src="/js/json2.js"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/animate.css" rel="stylesheet">
+    <script type="text/javascript">
+        $(document).ready(
+        function queryConfig() {
+            var user = sessionStorage.getItem('login_user');
+            $('#user').text('欢迎您，'+ user);
+            var baseUrl = getBaseUrl();
+            $.ajax({
+                type : "GET",
+                url : baseUrl + "/import?dataSource=idc",
+                dataType : "json",
+                contentType : "text",
+                success : function(data) {
+                    var html = "";
+                    for(var i=0;i<data.length;i++){
+                    	html += '<tr><td>'+data[i]['label'] + '</td><td>' +data[i]['frequency']+'</td><td>'+data[i]['datasource']+'</td><td>'+data[i]['url']+'</td><td>'+data[i]['schema_']+'</td><td>'+data[i]['tableName']+'</td><td><a onclick="edit('+data[i]['id']+');">编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;   <a onclick="cancel('+data[i]['id']+');">删除</a></td></tr>';
+                    }
+                    $("#sqlImportBody").html(html);
+                },
+                error : function(data) {
+                }
+            });
+
+            $.ajax({
+                type : "GET",
+                url : baseUrl + "/import?dataSource=idc",
+                dataType : "json",
+                contentType : "text",
+                success : function(data) {
+                    var html = "";
+                    for(var i=0;i<data.length;i++){
+                        html += '<tr><td>'+data[i]['label'] + '</td><td>' +data[i]['frequency']+'</td><td>'+data[i]['datasource']+'</td><td>'+data[i]['url']+'</td><td>'+data[i]['schema_']+'</td><td>'+data[i]['tableName']+'</td><td><a onclick="edit('+data[i]['id']+');">编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;   <a onclick="cancel('+data[i]['id']+');">删除</a></td></tr>';
+                    }
+                    $("#sqlImportBody").html(html);
+                },
+                error : function(data) {
+                }
+            });
+
+            $.ajax({
+                type : "GET",
+                url : baseUrl + "/getExcelImportLog",
+                dataType : "json",
+                contentType : "text",
+                success : function(data) {
+                	var html = "";
+                    for(var i=0;i<data.length;i++){
+                        html += '<tr><td>'+data[i]['excelFileName'] + '</td><td>' +data[i]['excelSavePath']+'</td><td>'+data[i]['importUser']+'</td><td>'+data[i]['importDate']+'</td></tr>';
+                    }
+                    $("#excelImportBody").html(html);
+                },
+                error : function(data) {
+                }
+            });
+            
+            $.ajax({
+                type : "GET",
+                url : baseUrl + "/shell?dataSource=idc",
+                dataType : "json",
+                contentType : "text",
+                success : function(data) {
+                	var html = "";
+                    for(var i=0;i<data.length;i++){
+                    	html += '<tr><td>'+data[i]['label'] + '</td><td>' +data[i]['frequency']+'</td><td>'+data[i]['shellText']+'</td><td><a onclick="editShell('+data[i]['id']+');">编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;   <a onclick="cancelShell('+data[i]['id']+');">删除</a></td></tr>';
+                    }
+                    $("#shellBody").html(html);
+                },
+                error : function(data) {
+                }
+            });
+        });
+        
+        function reload(){
+        	var baseUrl = getBaseUrl();
+            $.ajax({
+                type : "GET",
+                url : baseUrl + "/import?dataSource=idc",
+                dataType : "json",
+                contentType : "text",
+                success : function(data) {
+                    var html = "";
+                    $("#sqlImportBody").html("");
+                    for(var i=0;i<data.length;i++){
+                    	html += '<tr><td>'+data[i]['frequency']+'</td><td>'+data[i]['datasource']+'</td><td>'+data[i]['url']+'</td><td>'+data[i]['schema_']+'</td><td>'+data[i]['tableName']+'</td><td><a onclick="edit('+data[i]['id']+');">编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;   <a onclick="cancel('+data[i]['id']+');">删除</a></td></tr>';
+                    }
+                    $("#sqlImportBody").html(html);
+                },
+                error : function(data) {
+                }
+            });
+            
+            $.ajax({
+                type : "GET",
+                url : baseUrl + "/export?dataSource=idc",
+                dataType : "json",
+                contentType : "text",
+                success : function(data) {
+                	var html = "";
+                    for(var i=0;i<data.length;i++){
+                    	html += '<tr><td>'+data[i]['label'] + '</td><td>' +data[i]['frequency']+'</td><td>'+data[i]['datasource']+'</td><td>'+data[i]['url']+'</td><td>'+data[i]['schema_']+'</td><td>'+data[i]['outputPath']+'</td><td><a onclick="editExport('+data[i]['id']+');">编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;   <a onclick="cancelExport('+data[i]['id']+');">删除</a></td></tr>';
+                    }
+                    $("#exportBody").html(html);
+                },
+                error : function(data) {
+                }
+            });
+            
+            $.ajax({
+                type : "GET",
+                url : baseUrl + "/shell?dataSource=idc",
+                dataType : "json",
+                contentType : "text",
+                success : function(data) {
+                	var html = "";
+                    for(var i=0;i<data.length;i++){
+                    	html += '<tr><td>'+data[i]['label'] + '</td><td>' +data[i]['frequency']+'</td><td>'+data[i]['shellText']+'</td><td><a onclick="editShell('+data[i]['id']+');">编辑</a>&nbsp;&nbsp;&nbsp;&nbsp;   <a onclick="cancelShell('+data[i]['id']+');">删除</a></td></tr>';
+                    }
+                    $("#shellBody").html(html);
+                },
+                error : function(data) {
+                }
+            });
+        };
+        
+        var edit = function(data){
+        	window.location.href='/import/edit?id='+data;
+        };
+        
+        function cancel(id){
+          	 var baseUrl = getBaseUrl();
+          	 var res = confirm("确认删除该条定时任务?");
+          	 if(!res){
+          		 return;
+          	 }
+          	 $.ajax({
+                   type : "POST",
+                   url : baseUrl + "/cancelImportTask?id="+id,
+                   dataType : "text",
+                   contentType : "text",
+                   success : function(data) {
+                  	 alert('success:'+JSON.stringify(data));
+                  	 reload();
+                   },
+                   error : function(data) {
+                  	 alert('error:'+JSON.stringify(data));
+                  	 reload();
+                   }
+               });
+          };
+          
+          var editExport = function(data){
+          	window.location.href='/export/edit?id='+data;
+          };
+          
+          function cancelExport(id){
+            	 var baseUrl = getBaseUrl();
+            	 var res = confirm("确认删除该条定时任务?");
+            	 if(!res){
+            		 return;
+            	 }
+            	 $.ajax({
+                     type : "POST",
+                     url : baseUrl + "/cancelExportTask?id="+id,
+                     dataType : "text",
+                     contentType : "text",
+                     success : function(data) {
+                    	 alert('success:'+JSON.stringify(data));
+                    	 reload();
+                     },
+                     error : function(data) {
+                    	alert('error:'+JSON.stringify(data));
+                    	reload();
+                     }
+                 });
+            };
+            
+            var editShell = function(data){
+              	window.location.href='/shell/edit?id='+data;
+            };
+              
+            function cancelShell(id){
+                	 var baseUrl = getBaseUrl();
+                	 var res = confirm("确认删除该条定时任务?");
+                	 if(!res){
+                		 return;
+                	 }
+                	 $.ajax({
+                         type : "POST",
+                         url : baseUrl + "/cancelShellTask?id="+id,
+                         dataType : "text",
+                         contentType : "text",
+                         success : function(data) {
+                        	 alert('success:'+JSON.stringify(data));
+                        	 reload();
+                         },
+                         error : function(data) {
+                        	alert('error:'+JSON.stringify(data));
+                         }
+                     });
+             };
+        
+    </script>
+    <style type="text/css">
+        .btn{
+            width: 10%;
+        }
+    </style>
+</head>
+<body class="top-navigation">
+    <div id="wrapper">
+        <div id="page-wrapper" class="gray-bg">
+            <div class="row border-bottom white-bg">
+            <nav class="navbar navbar-expand-lg navbar-static-top" role="navigation">
+                <span th:include="basepath::html"></span>
+                <span class="navbar-brand">数据中间件系统</span>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-label="Toggle navigation">
+                        <i class="fa fa-reorder"></i>
+                    </button>
+                    <div class="navbar-collapse collapse" id="navbar" style="position: relative">
+                        <ul class="nav navbar-top-links navbar-right" style="position: absolute;right: 35px;">
+                            <li id="user" style="color: #676a6c">
+                            </li>
+                            <li>
+                                <a onclick="javascript:window.location.href='/logout'">
+                                    <i class="fa fa-sign-out"></i> 注销
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+            </nav>
+
+            </div>
+            <div class="wrapper wrapper-content">
+                <div class="container">
+                    <div class="row">
+
+                        <div class="col-lg-12">
+                            <div class="ibox ">
+                                <div class="ibox-title">
+                                    <h5>定时SQL导入</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div class="row">
+                                        <div class="col-sm-9 m-b-xs">
+                                            <input class="btn btn-primary " type="button" onclick="javascript:window.location.href='/sqlIimport/index'" value="配置">
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>标签</th>
+                                                <th>采集频率</th>
+                                                <th>数据源</th>
+                                                <th>数据URL</th>
+                                                <th>SCHEMA</th>
+                                                <th>输出表名</th>
+                                                <th>操作</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody  id="sqlImportBody">
+                                            </tbody>
+                                        </table>
+                                        <div id="pageBtns" class="page">
+                                        <span id="totalPages"></span>
+                                            <div class="container">
+                                                <button id="sqlImportFrontPage" type="button" class="btn btn-primary" onclick="frontPage('sqlImport')">
+                                                    上一页
+                                                </button>
+                                                <button id="sqlImportNextPage" type="button" class="btn btn-primary" onclick="nextPage('sqlImport')">
+                                                    下一页
+                                                </button>
+                                            </div>
+                                    </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12">
+                            <div class="ibox ">
+                                <div class="ibox-title">
+                                    <h5>EXCEL导入</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div class="row">
+                                        <div class="col-sm-9 m-b-xs">
+                                            <input class="btn btn-primary " type="button" onclick="javascript:window.location.href='/excelImport/index'" value="配置">
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>文件名</th>
+                                                <th>文件存储路径</th>
+                                                <th>导入者</th>
+                                                <th>导入时间</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody  id="excelImportBody">
+                                            </tbody>
+                                        </table>
+                                        <div id="pageBtns" class="page">
+                                            <span id="totalPages"></span>
+                                            <div class="container">
+                                                <button id="excelImportFrontPage" type="button" class="btn btn-primary" onclick="frontPage('excelImport')">
+                                                    上一页
+                                                </button>
+                                                <button id="excelImportNextPage" type="button" class="btn btn-primary" onclick="nextPage('excelImport')">
+                                                    下一页
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-12">
+                            <div class="ibox ">
+                                <div class="ibox-title">
+                                    <h5>定时导出</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div class="row">
+                                        <div class="col-sm-9 m-b-xs">
+                                            <input type="button" class="btn btn-primary " onclick="javascript:window.location.href='/export/index'" value="配置">
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>标签</th>
+                                                <th>采集频率</th>
+                                                <th>数据源</th>
+                                                <th>数据URL</th>
+                                                <th>SCHEMA</th>
+                                                <th>输出目录</th>
+                                                <th>操作</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody  id="exportBody">
+                                            </tbody>
+                                        </table>
+                                         <div id="pageBtnsS" class="page">
+                                        <span id="totalPages"></span>
+                                        <input type="button" class="btn-outline btn-link" onclick="frontPage()" value="上一页">
+                                        <input type="button" class="btn-outline btn-link" onclick="nextPage()" value="下一页">
+                                    </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        
+                         <div class="col-lg-12">
+                            <div class="ibox ">
+                                <div class="ibox-title">
+                                    <h5>定时执行SHELL脚本</h5>
+                                </div>
+                                <div class="ibox-content">
+                                    <div class="row">
+                                        <div class="col-sm-9 m-b-xs">
+                                            <input type="button" class="btn btn-primary " onclick="javascript:window.location.href='/shell/index'" value="配置">
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>标签</th>
+                                                <th>执行频率</th>
+                                                <th>执行脚本</th>
+                                                <th>操作</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody  id="shellBody">
+                                            </tbody>
+                                        </table>
+                                         <div id="pageBtnsS" class="page">
+                                        <span id="totalPages"></span>
+                                       <input type="button" class="btn-outline btn-link" onclick="frontPage()" value="上一页">
+                                        <input type="button" class="btn-outline btn-link" onclick="nextPage()" value="下一页">
+                                    </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-12">
+                            <div class="ibox-content ">
+                                <div class="row">
+                                    <div class="col-sm-9 m-b-xs">
+                                        <input type="button" class="btn btn-primary" onclick="javascript:window.location.href='/query/index'" value="手动查询">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+</body>
+<script>
+    var sqlImportPageNum = 1,excelImportPageNum = 1;
+    var sqlImportTotalNum = 3,excelImportTotalNum = 3;
+    $("#frontPage").hide();
+    function frontPage(mode){
+        if(mode == 'sqlImport'){
+            $("#sqlImportNextPage").show();
+            if(sqlImportPageNum > 1){
+                $("#sqlImportFrontPage").show();
+                sqlImportPageNum--;
+                query(sqlImportPageNum,mode);
+            }
+            else{
+                $("#sqlImportFrontPage").hide();
+            }
+        }else  if(mode == 'excelImport'){
+            $("#excelImportNextPage").show();
+            if(excelImportPageNum > 1){
+                $("#excelImportFrontPage").show();
+                excelImportPageNum--;
+                query(excelImportPageNum,mode);
+            }
+            else{
+                $("#excelImportFrontPage").hide();
+            }
+        }
+
+    }
+
+    function nextPage(mode){
+        if(mode == 'sqlImport'){$("#sqlImportFrontPage").show();
+            if(sqlImportPageNum < sqlImportTotalNum){
+                $("#sqlImportNextPage").show();
+                sqlImportPageNum++;
+                query(sqlImportPageNum,mode);
+            }
+            else{
+                $("#sqlImportNextPage").hide();
+            }
+        }else if(mode == 'excelImport'){
+            if(excelImportPageNum < excelImportTotalNum){
+                $("#excelImportNextPage").show();
+                excelImportPageNum++;
+                query(excelImportPageNum,mode);
+            }
+            else{
+                $("#excelImportNextPage").hide();
+            }
+        }
+
+    }
+
+
+</script>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/default/easyui.css"/>
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/icon.css"/>
+    <script src="/easyui/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/jquery.easyui.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/locale/easyui-lang-zh_CN.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/js/jsencrypt.min.js" type="text/javascript" charset="utf-8"></script>
+    <title>登录</title>
+    <style type="text/css">
+        body {
+            width: 100%;
+            height: 100%;
+            background-image: url('/images/login-background1.png');
+            /*background-size: 100% 100%;*/
+        }
+
+        .topTitle {
+            margin-top: 50px;
+            margin-left: 50px;
+            width: 600px;
+            height: 50px;
+            font-size: 25px;
+            color: red;
+            /*border-bottom: #000000 solid;*/
+        }
+
+        .logDiv {
+            padding-left: 56%;
+            padding-top: 50px;
+        }
+    </style>
+</head>
+<body>
+<!-- 	<div id="win" class="easyui-window" title="My Window" style="width:600px;height:400px"
+data-options="iconCls:'icon-save',modal:true">
+Window Content
+</div> -->
+<div class="easyui-window" style="width: 900px;height: 500px;background-image: url('/images/login-background2.png');background-size: 100% 100%;" title="用户登录" data-options={closable:false,minimizable:false,maximizable:false,collapsible:false}>
+    <div class="topTitle">
+        <!--XXXX管理系统-->
+    </div>
+
+    <div class="logDiv">
+        <table cellspacing="20" cellpadding="0">
+            <tr>
+                <td>用户名:</td>
+                <td><input type="text" id="userName" name="userName" class="easyui-textbox"/></td>
+            </tr>
+            <tr>
+                <td>密码:</td>
+                <td><input type="password" id="password" name="password" class="easyui-textbox"/></td>
+            </tr>
+             <tr>
+                 <td>验证码:</td>
+                 <td><input name="authcode" id="authcode" type="text" class="easyui-textbox" style="width: 101px;"/>
+                     <a title="点击刷新验证码" style="vertical-align: bottom;position: relative;cursor: pointer;">
+                         <img class="easyui-linkbutton" onclick="getVerify(this);" width="70px" height="35" src="/getVerify" id="authcodeimg">
+                     </a>
+                 </td>
+            </tr>
+
+            <tr>
+                <td></td>
+                <td>
+                    <div style="">
+                        <a id="btn-clear" href="#" class="easyui-linkbutton" iconCls="icon-cancel">重置</a>
+                        <a id="btn-login" href="#" class="easyui-linkbutton" iconCls="icon-ok">登录</a>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+
+</div>
+</body>
+<script type="text/javascript">
+    //获取验证码
+    function getVerify(obj) {
+        obj.src ="/getVerify?" + Math.random();
+    }
+
+    $("#btn-clear").click(function (){
+        $("input").val("");
+    });
+
+    $(document).ready(function () {
+        $(document).keyup(function (event) {
+            if (event.keyCode == '13') {
+                $("#loginForm button").click();
+            }
+        });
+        $("#authcodeimg").click();
+        $("#btn-login").click(function () {
+            var userName = $("#userName").val();
+            var passwordid = $("#password").val();
+            if (userName == "" || userName == null) {
+                $.messager.show({
+                    title:"提示",
+                    msg: "请填写用户名！"
+                });
+                $("#userName").focus();
+                return false;
+            }
+            if (passwordid == "" || passwordid == null) {
+                $.messager.show({
+                    title:"提示",
+                    msg: "请填写密码！"
+                });
+                $("#userName").focus();
+                return false;
+            }
+            //临时关闭ajax异步开关，先从服务端获取公钥后再登录
+            $.ajaxSettings.async = false;
+            var encPwd;
+            $.get("getPublicKey",
+                function (data) {
+                    if (data == "failed") {
+                        $.messager.alert('提示','获取公钥失败','info');
+                        return false;
+                    }
+                    else {
+                        var encrypt = new JSEncrypt();
+                        encrypt.setPublicKey(data);
+                        encPwd = encrypt.encrypt($("#password").val());
+                    }
+                }
+            );
+            $.post("login",
+                {
+                    "username": $("#userName").val(),
+                    "password": encPwd,
+                    "authcode": $("#authcode").val()
+                },
+                function (data) {
+                    switch (data) {
+                        case 'username_or_pwd_error':
+                            $.messager.alert("提示",'用户名密码错误',"info");
+                            break;
+                        case 'auth_code_error':
+                            $.messager.alert("提示",'验证码错误',"info");
+                            break;
+                        case 'check_auth_code_failed':
+                            $.messager.alert("提示",'验证码校验失败',"info");
+                            break;
+                        case 'pwd_is_unsafe':
+                            $.messager.alert("提示",'密码复杂度不满足要求',"info");
+                            break;
+                        case 'failed':
+                            $.messager.alert("提示",'登录失败，请联系管理员',"info");
+                            break;
+                        case 'success':
+                            $.messager.show({
+                                title:'提示',
+                                msg:"登陆成功",
+                                timeout:1000
+                            });
+                            window.location.href = "main";
+                            sessionStorage.setItem('login_user', $("#userName").val());
+                            break;
+                    }
+                });
+            // 开启ajax异步开关
+            $.ajaxSettings.async = true;
+        });
+    });
+
+</script>
+</html>

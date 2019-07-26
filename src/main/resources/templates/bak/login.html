@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh">
+<head>
+    <meta charset="utf-8">
+    <title>数据中间件系统登录</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+    <meta name="author" content=""/>
+    <link href="css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link href="css/sweetalert2.min.css" rel="stylesheet"/>
+    <link href="css/style.css" rel="stylesheet"/>
+    <link href="css/animate.css" rel="stylesheet">
+</head>
+
+<body class="gray-bg">
+<div class="middle-box text-center loginscreen animated fadeInDown">
+    <div>
+        <div>
+            <h1 class="logo-name" style="font-size: 140px;letter-spacing: 0px;">SJZJJ</h1>
+        </div>
+        <h3>数据中间件系统</h3>
+        <!--<p>Perfectly designed and precisely prepared admin theme with over 50 pages with extra new web app views.-->
+            <!--&lt;!&ndash;Continually expanded and constantly improved Inspinia Admin Them (IN+)&ndash;&gt;-->
+        <!--</p>-->
+        <!--<p>Login in. To see it in action.</p>-->
+        <form id="loginForm" class="m-t" role="form">
+            <div class="form-group">
+                <input id="userid" name="username" type="text" class="form-control" placeholder="请输入账号" required="">
+            </div>
+            <div class="form-group">
+                <input id="passwordid" name="password" type="password" class="form-control" placeholder="密码"
+                       autocomplete="off" required="">
+            </div>
+            <div class="form-group">
+                <input name="authcode" id="authcode" type="text" class="form-control" style="width: 68%;float: left;padding-right: 2%;"
+                       tabindex="4" path="authcode" value="" required="" placeholder="请输入验证码"/>
+                <a title="点击刷新验证码" style="vertical-align: bottom;position: relative;cursor: pointer;">
+                    <img onclick="getVerify(this);" width="30%" height="35" src="" id="authcodeimg">
+                </a>
+            </div>
+            <button type="button" class="btn btn-primary block full-width m-b">登录</button>
+        </form>
+    </div>
+</div>
+
+<script src="js/jquery-3.1.1.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/jplaceholder.js"></script>
+<script src="js/sweetalert2.min.js"></script>
+<script src="js/es6-promise.min.js"></script>
+<script src="js/jsencrypt.min.js"></script>
+<!-- Mainly scripts -->
+<!--<script src="js/jquery-3.1.1.min.js"></script>-->
+<script src="js/popper.min.js"></script>
+<script src="js/bootstrap.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $(document).keyup(function (event) {
+            if (event.keyCode == '13') {
+                $("#loginForm button").click();
+            }
+        });
+        $("#authcodeimg").click();
+        $("#loginForm button").click(function () {
+            var userid = $("#userid").val();
+            var passwordid = $("#passwordid").val();
+            if (userid == "" || userid == null) {
+                $("#userid").attr("placeholder", "用户名不能为空");
+                return false;
+            }
+            if (passwordid == "" || passwordid == null) {
+                $("#passwordid").attr("placeholder", "密码不能为空");
+                return false;
+            }
+            //临时关闭ajax异步开关，先从服务端获取公钥后再登录
+            $.ajaxSettings.async = false;
+            var encPwd;
+            $.get("getPublicKey",
+                function (data) {
+                    if (data == "failed") {
+                        alert("获取公钥失败");
+                        return false;
+                    }
+                    else {
+                        var encrypt = new JSEncrypt();
+                        encrypt.setPublicKey(data);
+                        encPwd = encrypt.encrypt($("#passwordid").val());
+                    }
+                }
+            );
+            $.post("login",
+                {
+                    "username": $("#userid").val(),
+                    "password": encPwd,
+                    "authcode": $("#authcode").val()
+                },
+                function (data) {
+                    switch (data) {
+                        case 'username_or_pwd_error':
+                            swal('Oops...', '用户名密码错误！', 'error').then(function () {
+                                window.location.href = "login";
+                            });
+                            break;
+                        case 'auth_code_error':
+                            swal('Oops...', '验证码错误！', 'error').then(function () {
+                                window.location.href = "login";
+                            });
+                            break;
+                        case 'check_auth_code_failed':
+                            swal('Oops...', '验证码校验失败！', 'error').then(function () {
+                                window.location.href = "login";
+                            });
+                            break;
+                        case 'pwd_is_unsafe':
+                            swal('Oops...', '密码复杂度不满足要求！', 'error').then(function () {
+                                window.location.href = "login";
+                            });
+                            break;
+                        case 'failed':
+                            swal('Oops...', '登录失败，请联系管理员！', 'error').then(function () {
+                                window.location.href = "login";
+                            });
+                            break;
+                        case 'success':
+                            window.location.href = "main";
+                            sessionStorage.setItem('login_user', $("#userid").val());
+                            break;
+                    }
+                });
+            // 开启ajax异步开关
+            $.ajaxSettings.async = true;
+        });
+    });
+
+    //获取验证码
+    function getVerify(obj) {
+        var baseUrl = getBaseUrl();
+        obj.src = baseUrl + "/getVerify?" + Math.random();
+    }
+</script>
+<!-- 获取url -->
+<span th:include="basepath::html"></span>
+</body>
+</html>

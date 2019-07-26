@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/default/easyui.css"/>
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/icon.css"/>
+    <script src="/easyui/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/jquery.easyui.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/locale/easyui-lang-zh_CN.js" type="text/javascript" charset="utf-8"></script>
+    <title>数据中间件系统</title>
+</head>
+<style>
+    html, body {
+        height: 100%;
+    }
+
+    #shellAddTable {
+        margin-left: 20%;
+        margin-right: 20%;
+    }
+
+    #shellDialog {
+        margin-top: 10px;
+        height: 400px;
+        width: 600px;
+    }
+</style>
+<body>
+<div class="easyui-layout" style="height: 100%">
+    <div id="shellDialog">
+        <form id="myForm">
+            <table id="shellAddTable" cellspacing="10" cellpadding="0">
+                <tr>
+                    <td><p>采集周期</p><input type="hidden" id="id"><input id="frequency" name="frequency"
+                                                                       class="easyui-textbox" required="true"
+                                                                       type="text"></td>
+                </tr>
+                <tr>
+                    <td><p>执行脚本路径</p><input type="text" class="easyui-textbox" required="true" id="shellText"
+                                            name="shellText"></td>
+                </tr>
+                <tr>
+                    <td><p>标签</p><input type="text" class="easyui-textbox" required="true" id="label" name="label"></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+
+    <div id="shellDataGridDiv" region="center">
+        <table id="shellDataGrid"></table>
+    </div>
+</div>
+</body>
+<script>
+    $("#shellDataGrid").datagrid({
+        rownumbers: true,
+        singleSelect: false,
+        striped: true,
+        fit: true,
+        url: '/shell?dataSource=idc',
+        method: "get",
+        // 注意 两个数组
+        columns: [
+            [{field: 'checkbox', checkbox: true}, {
+                field: 'label',
+                title: '标签',
+                width: '33%'
+            },
+                {
+                    field: 'frequency',
+                    title: '采集频率',
+                    width: '33%'
+                },
+                {
+                    field: 'shellText',
+                    title: '执行脚本',
+                    width: '35%'
+                }
+            ]
+        ],
+        fitColumns: true,
+        autoRowHeight: false,
+        loadMsg: '数据加载中。。。',
+        pagination: true,
+        toolbar: [{
+            iconCls: 'icon-add',
+            text: '新增',
+            handler: add
+        }, '-', {
+            iconCls: 'icon-edit',
+            text: '编辑',
+            handler: edit
+        }, '-', {
+            iconCls: 'icon-remove',
+            text: '删除',
+            handler: remove
+        }]
+    });
+
+    $("#shellDialog").dialog({
+        maximizable: true,
+        resizable: true,
+        collapsible: true,
+        closed: true,
+        buttons: [
+            {
+                text: '重置',
+                iconCls: 'icon-cancel',
+                handler: clearAll
+            }, {
+                text: '保存',
+                iconCls: 'icon-save',
+                handler: saveRecord
+            }]
+    });
+
+    var submitUrl = "";
+
+    function saveRecord() {
+        var configData = {
+            frequency: $('#frequency').val(),
+            label: $('#label').val(),
+            shellText: $('#shellText').val(),
+            id: $('#id').val()
+        };
+        $.ajax({
+            type: 'post',
+            url: submitUrl,
+            data: JSON.stringify(configData),
+            cache: false,
+            dataType: "text",
+            contentType: "application/json",
+            success: function (data) {
+                if (data == "sql_is_not_correct") {
+                    $.messager.alert('提示', '配置失败', 'info');
+                } else if (data == "success") {
+                    $.messager.show({
+                        title: '提示',
+                        msg: "配置成功",
+                        timeout: 1000
+                    });
+                    $("#shellDialog").dialog('close');
+                    $("#shellDataGrid").datagrid('reload');
+                } else {
+                    // TODO
+                }
+            },
+            error: function (data) {
+                $.messager.alert("错误", "系统发生错误，请联系管理员!", "error");
+            }
+        });
+    }
+
+    function add() {
+        submitUrl = "/shell";
+        $("#myForm").form("clear");
+        $("#shellDialog").dialog('open').dialog('setTitle', '新增shell脚本');
+    }
+
+    function edit() {
+        var record = $("#shellDataGrid").datagrid('getSelected');
+        if (record == null) {
+            $.messager.show({
+                title: "提示",
+                msg: "请选择一条记录！",
+                timeout: 1000
+            });
+        } else {
+            submitUrl = "/shell";
+            $("#shellDialog").dialog("open").dialog("setTitle", "编辑shell脚本");
+
+            $("#id").val(record.id);
+            $("#frequency").textbox("setValue", record.frequency);
+            $("#shellText").textbox("setValue", record.shellText);
+            $("#label").textbox("setValue", record.label);
+        }
+    }
+
+    function remove() {
+        var record = $("#shellDataGrid").datagrid('getChecked');
+        if (record.length == 0) {
+            $.messager.show({
+                title: '提示',
+                msg: '请选择一条数据',
+                timeout: 1000
+            });
+        } else {
+            $.messager.confirm('提示', '确认删除选中的' + record.length + '条记录吗？删除后不可恢复！', function (r) {
+                var ids = "";
+                if (r) {
+                    for (var i = 0; i < record.length; i++) {
+                        if (i < record.length - 1) {
+                            ids = ids + "'" + record[i].id + "',";
+                        } else {
+                            ids = ids + "'" + record[i].id + "'";
+                        }
+                    }
+                    $.post("/cancelShellTask?ids=" + ids, function (data) {
+                        $.messager.show({
+                            title: "提示",
+                            msg: data.msg,
+                            timeout: 1000
+                        });
+                        $("#shellDataGrid").datagrid('reload');
+                    }, "json");
+                }
+            })
+        }
+    }
+
+    function clearAll() {
+        $("input[type='text").val('');
+        $("textarea").val('');
+    }
+</script>
+</html>

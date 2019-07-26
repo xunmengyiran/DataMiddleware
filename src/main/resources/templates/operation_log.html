@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/default/easyui.css"/>
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/icon.css"/>
+    <script src="/easyui/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/jquery.easyui.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/locale/easyui-lang-zh_CN.js" type="text/javascript" charset="utf-8"></script>
+    <title>数据中间件系统</title>
+</head>
+<style>
+    html, body {
+        height: 100%;
+    }
+
+    #sqlImportAddTable {
+        margin-left: 20%;
+        margin-right: 20%;
+    }
+
+    #searchDiv {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+</style>
+<body>
+<!--<div class="easyui-layout" style="height: 100%">-->
+    <!--<div region="center">-->
+        <div id="searchDiv">
+            <label for="startDate">起始时间:</label>
+            <input id="startDate" class="easyui-datebox">
+            ~
+            <label for="endDate">结束时间:</label>
+            <input  id="endDate" class="easyui-datebox">
+            <a href="#" class="easyui-linkbutton" iconCls="icon-search" id="btn-search">查询</a>
+        </div>
+            <div style="height: 90%">
+            <table id="sysLogDataGrid" style="height: 500px"></table>
+        </div>
+    <!--</div>-->
+<!--</div>-->
+</body>
+<script>
+
+    $("#sysLogDataGrid").datagrid({
+        title: '操作日志',
+        rownumbers: true,
+        // singleSelect: false,
+        striped: true,
+        fit: true,
+        url: '/querySysLog',
+        method: "get",
+        // 注意 两个数组
+        columns: [
+            [{
+                field: 'operationUserName',
+                title: '用户名',
+                width: '10%'
+            },
+                {
+                    field: 'operationName',
+                    title: '操作名称',
+                    width: '25%'
+                },
+                {
+                    field: 'operationMethod',
+                    title: '操作方法',
+                    width: '42%'
+                },
+                {
+                    field: 'operationDate',
+                    title: '操作时间',
+                    width: '25%',
+                }
+            ]
+        ],
+        fitColumns: true,
+        autoRowHeight: false,
+        loadMsg: '数据加载中。。。',
+        pagination: true
+    });
+
+    $("#btn-search").click(function(){
+        $("#sysLogDataGrid").datagrid('load',{
+            startDate: $("#startDate").val(),
+            endDate: $("#endDate").val()
+        })
+    });
+</script>
+</html>

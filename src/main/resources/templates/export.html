@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/default/easyui.css"/>
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/icon.css"/>
+    <script src="/easyui/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/jquery.easyui.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/locale/easyui-lang-zh_CN.js" type="text/javascript" charset="utf-8"></script>
+    <title>数据中间件系统</title>
+</head>
+<style>
+    html, body {
+        height: 100%;
+    }
+    #sqlImportAddTable{
+        margin-left: 20%;
+        margin-right: 20%;
+    }
+
+    #exportDialog{
+        margin-top: 10px;
+        height: 400px;
+        width: 600px;
+    }
+</style>
+<body>
+<div  class="easyui-layout"  style="height: 100%">
+    <div id="exportDialog">
+        <form id="myForm">
+            <table id="sqlImportAddTable" cellspacing="10" cellpadding="0">
+                <tr>
+                    <td><p>采集周期</p><input type="hidden" id="id"><input id="frequency" class="easyui-textbox" required="true" type="text"></td>
+                    <td><p>源URL</p><input type="text" class="easyui-textbox" required="true" id="url"></td>
+                </tr>
+                <tr>
+                    <td><p>用户名</p><input type="text" class="easyui-textbox" required="true" id="username"></td>
+                    <td><p>密码</p><input type="password" class="easyui-textbox" required="true" id="pwd"></td>
+                </tr>
+                <tr>
+                    <td><p>标签</p><input type="text" class="easyui-textbox" required="true" id="label"></td>
+                    <td><p>输出路径</p><input type="text" class="easyui-textbox" required="true" id="outputPath"></td>
+                </tr>
+                <tr>
+                    <td><p>数据源</p>
+                        <select id="datasource" class="easyui-combobox" required="true" style="width: 100px" data-options="panelHeight:'auto'">
+                            <option value="MySql" selected="selected">MySql</option>
+                            <option value="Oracle">Oracle</option>
+                        </select></td>
+                    <td></td>
+                </tr>
+            </table>
+            <textarea class="easyui-textbox" required="true" style="height:311px;width:100%;margin-left: 10%;margin-right: 10%" id="sqlstr" multiline="true" placeholder="请输入SQL导入语句"></textarea>
+        </form>
+    </div>
+
+    <div id="exportDataGridDiv" region="center">
+        <table id="exportDataGrid"></table>
+    </div>
+</div>
+</body>
+<script>
+    $("#exportDataGrid").datagrid({
+        rownumbers: true,
+        singleSelect: false,
+        striped: true,
+        fit:true,
+        url: '/export?dataSource=idc',
+        method: "get",
+        // 注意 两个数组
+        columns: [
+            [{field: 'checkbox', checkbox: true}, {
+                field: 'label',
+                title: '标签',
+                width: '16%'
+            },
+                {
+                    field: 'frequency',
+                    title: '采集频率',
+                    width: '16%'
+                },
+                {
+                    field: 'datasource',
+                    title: '数据源',
+                    width: '16%'
+                },
+                {
+                    field: 'url',
+                    title: '数据URL',
+                    width: '16%'
+                },
+                {
+                    field: 'schema_',
+                    title: 'SCHEMA',
+                    width: '16%'
+                },
+                {
+                    field: 'outputPath',
+                    title: '输出路径',
+                    width: '21%'
+                }
+            ]
+        ],
+        fitColumns: true,
+        autoRowHeight: false,
+        loadMsg: '数据加载中。。。',
+        pagination: true,
+        toolbar: [{
+            iconCls: 'icon-add',
+            text: '新增',
+            handler: add
+        }, '-', {
+            iconCls: 'icon-edit',
+            text: '编辑',
+            handler: edit
+        }, '-', {
+            iconCls: 'icon-remove',
+            text: '删除',
+            handler: remove
+        }]
+    });
+
+    $("#exportDialog").dialog({
+        maximizable:true,
+        resizable:true,
+        collapsible:true,
+        closed:true,
+        buttons:[
+            {
+                text:'重置',
+                iconCls: 'icon-cancel',
+                handler:clearAll
+            },{
+                text:'保存',
+                iconCls:'icon-save',
+                handler:saveRecord
+            }]
+    });
+
+    var submitUrl = "";
+
+    function saveRecord() {
+        var configData = {
+            frequency:$('#frequency').val(),
+            url:$('#url').val(),
+            username:$('#username').val(),
+            pwd:$('#pwd').val(),
+            label:$('#label').val(),
+            outputPath:$('#outputPath').val(),
+            sqlstr:$('#sqlstr').val(),
+            id:$('#id').val(),
+            datasource:$('#datasource').val()
+        };
+        $.ajax({
+            type: 'post',
+            url: submitUrl,
+            data: JSON.stringify(configData),
+            cache: false,
+            dataType: "text",
+            contentType: "application/json",
+            success: function (data) {
+                if (data == "sql_is_not_correct"){
+                    $.messager.alert('提示','SQL配置格式错误','info');
+                }else if(data == "success"){
+                    $.messager.show({
+                        title:'提示',
+                        msg:"配置成功",
+                        timeout:1000
+                    });
+                    $("#exportDialog").dialog('close');
+                    $("#exportDataGrid").datagrid('reload');
+                }else {
+                    // TODO
+                }
+            },
+            error: function (data) {
+                $.messager.alert("错误","系统发生错误，请联系管理员!","error");
+            }
+        });
+    }
+
+    function add() {
+        submitUrl = "/export";
+        $("#myForm").form("clear");
+        $("#exportDialog").dialog('open').dialog('setTitle','新增');
+    }
+
+    function edit() {
+        var record = $("#exportDataGrid").datagrid('getSelected');
+        if (record == null) {
+            $.messager.show({
+                title: "提示",
+                msg: "请选择一条记录！",
+                timeout:1000
+            });
+        } else {
+            submitUrl = "/export";
+            $("#exportDialog").dialog("open").dialog("setTitle", "编辑");
+            // $("#myForm").form("load", record);
+            $("#id").val(record.id);
+            $("#frequency").textbox("setValue", record.frequency);
+            $("#url").textbox("setValue", record.url);
+            $("#username").textbox("setValue", record.username);
+            $("#pwd").textbox("setValue", record.pwd);
+            $("#label").textbox("setValue", record.label);
+            $("#outputPath").textbox("setValue", record.outputPath);
+            $("#sqlstr").textbox("setValue", record.sqlstr);
+            $("#datasource").textbox("setValue", record.datasource);
+        }
+    }
+
+    function remove() {
+        var record = $("#exportDataGrid").datagrid('getChecked');
+        if(record.length == 0){
+            $.messager.show({
+                title:'提示',
+                msg:'请选择一条数据',
+                timeout:1000
+            });
+        }else{
+            $.messager.confirm('提示', '确认删除选中的' + record.length + '条记录吗？删除后不可恢复！', function (r) {
+                var ids = "";
+                if (r) {
+                    for (var i = 0; i < record.length; i++) {
+                        if (i < record.length - 1) {
+                            ids = ids + "'" + record[i].id + "',";
+                        } else {
+                            ids = ids + "'" + record[i].id + "'";
+                        }
+                    }
+                    $.post("/cancelExportTask?ids=" + ids, function (data) {
+                        $.messager.show({
+                            title: "提示",
+                            msg: data.msg,
+                            timeout: 1000
+                        });
+                        $("#exportDataGrid").datagrid('reload');
+                    },"json");
+                }
+            })
+        }
+    }
+
+    function clearAll() {
+        $("input[type='text").val('');
+        $("textarea").val('');
+    }
+</script>
+</html>

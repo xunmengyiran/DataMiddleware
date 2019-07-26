@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/default/easyui.css"/>
+    <link rel="stylesheet" type="text/css" href="/easyui/themes/icon.css"/>
+    <script src="/easyui/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/jquery.easyui.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/easyui/locale/easyui-lang-zh_CN.js" type="text/javascript" charset="utf-8"></script>
+    <title>数据中间件系统</title>
+</head>
+<style>
+    html {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: #FF8080;
+    }
+
+    #topDiv {
+        background-image: url(/images/top-background.png);
+        background-size: 100% 100%;
+    }
+
+    #footDiv {
+        text-align: center;
+    }
+
+    #span1 {
+        float: right;
+        font-size: 18px;
+        margin-right: 15px;
+        margin-top: 50px;
+    }
+
+    a {
+        text-decoration: none;
+        color: #000000;
+    }
+
+    .top-right {
+        font-size: 18px;
+    }
+
+</style>
+<body class="easyui-layout">
+<div class="easyui-layout" style="width: 100%;height: 100%">
+    <div id="topDiv" data-options="region:'north'" style="height:77px">
+        <span id="span1"></span>
+    </div>
+    <div id="leftDiv" data-options="region:'west',title:'导航'" style="width: 200px;">
+        <div class="easyui-accordion">
+            <div title="数据导入">
+                <ul id="importTree"></ul>
+            </div>
+
+            <div title="数据导出">
+                <ul id="exportTree"></ul>
+            </div>
+
+            <div title="定时SHELL">
+                <ul id="shellTree"></ul>
+            </div>
+
+            <div title="日志">
+                <ul id="logTree"></ul>
+            </div>
+
+            <div title="查询">
+                <ul id="searchTree"></ul>
+            </div>
+        </div>
+
+
+    </div>
+    <div id="centerDiv" data-options="region:'center'">
+        <div id="tabs" class="easyui-tabs" data-options="fit:'true'">
+            <div id="" data-options="title:'定时SQL导入'">
+                <iframe src="sqlImport" width="100%" frameborder="0" height="100%" scrolling="auto"></iframe>
+            </div>
+
+        </div>
+    </div>
+    <div id="footDiv" data-options="region:'south'" style="height: 21px;">
+        <span>版权所有 侵权必究</span>
+    </div>
+
+</div>
+</body>
+<script>
+
+    var user = sessionStorage.getItem('login_user');
+    $("#span1").html("用户名:" + user + " | <a href='#' onclick='logout()'>安全退出</a>");
+    $("#importTree").tree({
+        data: [{
+            text: '定时SQL导入',
+            attributes: {
+                url: 'sqlImport'
+            }
+        }, {
+            text: 'EXCEL导入',
+            attributes: {
+                url: 'excelImport'
+            }
+        }],
+        onClick: openTab
+    });
+
+    $("#exportTree").tree({
+        data: [{
+            text: '导出至EXCEL',
+            attributes: {
+                url: 'export2Excel'
+            }
+        }],
+        onClick: openTab
+    });
+
+    $("#shellTree").tree({
+        data: [{
+            text: '定时执行shell脚本',
+            attributes: {
+                url: 'shel1'
+            }
+        }],
+        onClick: openTab
+    });
+
+    $("#logTree").tree({
+        data:[{
+            text:'用户操作日志',
+            attributes: {
+                url: 'operationLog'
+            }
+        }],
+        onClick: openTab
+    });
+
+    $("#searchTree").tree({
+        data: [{
+            text: '手动查询',
+            attributes: {
+                url: 'query'
+            }
+        }],
+        onClick: openTab
+    });
+    function logout() {
+        $.messager.confirm('提示','确认退出？',function (r) {
+            if (r) {
+                window.location.href="/logout";
+            }
+        })
+    }
+
+    function openTab(node) {
+        // 第一节点不打开tab页
+        var isExists = $("#tabs").tabs('exists', node.text);
+        if (isExists) {
+            $("#tabs").tabs('select', node.text);
+        } else {
+            $("#tabs").tabs('add', {
+                title: node.text,
+                closable: true,
+                content: '<iframe src="' + node.attributes.url + '" width="100%" frameborder="0" height="100%" scrolling="auto"></iframe>'
+            });
+        }
+    }
+</script>
+</html>
